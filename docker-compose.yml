@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  # Web Sunucumuz (PHP + Apache)
+  web:
+    build: .
+    container_name: daynex_api_web
+    ports:
+      - "8080:80"
+    volumes:
+      - ./src:/var/www/html
+    environment:
+      - APACHE_DOCUMENT_ROOT=/var/www/html
+    networks:
+      - daynex_network
+    depends_on:
+      - db
+
+  # Veri Tabanımız (MySQL)
+  db:
+    image: mysql:8.0
+    container_name: daynex_api_db
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=rootsecret
+      - MYSQL_DATABASE=daynex_b2b_db
+      - MYSQL_USER=daynex_user
+      - MYSQL_PASSWORD=daynex_pass
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - daynex_network
+
+networks:
+  daynex_network:
+    driver: bridge
+
+volumes:
+  db_data:
