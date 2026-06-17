@@ -1,21 +1,26 @@
-# CodeIgniter 3 + Docker RESTful API Framework (Daynex B2B Hazırlık)
+# CodeIgniter 3 + Docker RESTful API Framework & jQuery Frontend Panel (Daynex B2B Hazırlık)
 
-Bu proje, modern RESTful API standartlarını ve kurumsal backend mimarilerini deneyimlemek amacıyla, **Docker** üzerinde izole edilmiş **PHP 8 + Apache + MySQL** ortamında geliştirilmiş esnek ve hafif bir API altyapısıdır.
+Bu proje, modern RESTful API standartlarını, kurumsal backend mimarilerini ve dinamik asenkron (AJAX/jQuery) ön yüz entegrasyonlarını deneyimlemek amacıyla geliştirilmiştir. Docker üzerinde izole edilmiş **PHP 8 + Apache + MySQL** ortamında çalışan esnek bir API altyapısı ile bu API'yi tüketen modern, responsive bir yönetim panelinden oluşur.
 
 ---
 
 ## 🚨 ÖNEMLİ NOT: Geliştirme Yaklaşımı & AI Kullanımı
 
-> **Bu proje, internetten hazır kopyalanmış veya yapay zekaya (AI) körü körüne yazdırılmış bir "full-AI" projesi DEĞİLDİR.** > 
-> Projenin tüm **MVC mimari tasarımı, veritabanı ilişkileri (Foreign Key / Cascade kuralları), CORS politikaları ve JWT güvenlik süreçleri** bizzat benim tarafımdan kurgulanmış, yönetilmiş ve test edilmiştir. Yapay zeka (AI), geliştirme sürecinde sadece kodların refactor edilmesi, PHP 8 uyumluluk optimizasyonları ve dökümantasyon/yorum satırlarının kurumsal standartlara göre revize edilmesi amacıyla akıllı bir asistan olarak kullanılmıştır. Projedeki her bir satır kodun çalışma mantığına, HTTP durum kodlarının seçimine ve mimari kararlara tamamen hakimim.
+Bu proje, internetten hazır kopyalanmış veya yapay zekaya (AI) körü körüne yazdırılmış bir "full-AI" projesi **DEĞİLDİR**. 
+* Projenin tüm MVC mimari tasarımı, veritabanı ilişkileri (Foreign Key / Cascade kuralları), CORS politikaları, JWT güvenlik süreçleri ve frontend mimarisi bizzat benim tarafımdan kurgulanmış, yönetilmiş ve test edilmiştir. 
+* Yapay zeka (AI), geliştirme sürecinde sadece kodların kurumsal standartlara göre refactor edilmesi, PHP 8 ve tarayıcı cross-platform uyumluluk optimizasyonları ile dökümantasyon/yorum satırlarının temizlenmesi amacıyla akıllı bir asistan olarak kullanılmıştır. 
+* Projedeki her bir satır kodun çalışma mantığına, veritabanı performans kriterlerine, HTTP durum kodlarının seçimine ve mimari kararlara tamamen hakimim.
 
 ---
 
 ## 🛠️ Teknolojiler ve Altyapı
 
-* **Framework:** CodeIgniter 3 (PHP 8.0 ve üzeri versiyonlarla tamamen uyumlu hale getirilmiştir)
+* **Backend Framework:** CodeIgniter 3 (PHP 8.0 ve üzeri versiyonlarla %100 uyumlu hale getirilmiştir)
+* **Frontend Altyapısı:** HTML5, CSS3 (Inter Font entegrasyonu), Bootstrap 5 (Responsive Grid & UI Components)
+* **Asenkron Veri Yönetimi:** jQuery 3.6.4 (AJAX HTTP Requests & DOM Manipulation)
+* **Kullanıcı Deneyimi (UX):** Toastr.js (Non-blocking modern bildirim toast mimarisi)
 * **Ortam:** Docker & Docker Compose (Çoklu konteyner mimarisi: Web & DB)
-* **Veritabanı:** MySQL 8.0 (İlişkisel Veritabanı Yönetimi)
+* **Veritabanı:** MySQL 8.0 (İlişkisel Veritabanı Yönetimi & InnoDB Engine)
 * **Güvenlik / Kimlik Doğrulama:** JWT (JSON Web Token - `firebase/php-jwt`)
 * **Bağımlılık Yönetimi:** Composer (Docker konteynerine entegre)
 
@@ -23,40 +28,44 @@ Bu proje, modern RESTful API standartlarını ve kurumsal backend mimarilerini d
 
 ## 📐 Mimari ve Öne Çıkan Özellikler
 
-### 1. Ortak API Sınıfı (`Api_Controller`)
-Tüm controller sınıflarının türediği `Api_Controller`, projenin kalbini oluşturur:
-* **CORS Yönetimi:** Tarayıcı krizlerini önleyen dinamik `OPTIONS` ve header yönetimi.
-* **Payload Çözücü:** Ham JSON verilerini otomatik olarak yakalayıp `$this->input_data` dizisine çeviren mekanizma.
-* **Standart Çıktı:** Tüm endpoint'lerin istemciye tek tip ve kurumsal standartta (Status, Message, Data) JSON dönmesini sağlayan merkezi `response()` fonksiyonu.
+### 1. Katmanlı ve Temiz Frontend Mimarisi (Separation of Concerns)
+Ön yüz kodları tek bir dosyada boğulmak (spagetti kod) yerine, kurumsal standartlara uygun olarak modüler bir şekilde ayrıştırılmıştır:
+* `index.html`: Sadece semantik HTML5 iskeletini ve üçüncü parti kütüphanelerin CDN bağlantılarını içerir.
+* `style.css`: Kurumsal renk paletini, responsive kırılma noktalarını ve arayüz özelleştirmelerini barındırır.
+* `app.js`: Tüm iş mantığını, jQuery AJAX isteklerini, Toastr yönetimini ve form kontrollerini yöneten merkez üssüdür.
 
-### 2. İlişkisel Veritabanı Tasarımı (SQL JOIN & Cascade)
-* `categories` ve `products` tabloları arasında **Foreign Key** ilişkisi kurulmuştur.
-* `ON DELETE CASCADE` kuralı sayesinde veri tutarlılığı (`Referential Integrity`) veritabanı seviyesinde güvenceye alınmıştır.
-* `Product_model` içinde veriler ham SQL yerine CodeIgniter **Query Builder** ile `INNER JOIN` yapılarak ilişkili şekilde çekilmektedir.
+### 2. Çift Dikiş Güvenlik ve Mükerrer Kayıt Filtreleme (Business Logic)
+* **Frontend Seviyesi:** Kullanıcı yeni bir kategori eklemeye çalıştığında, `app.js` anında canlı select kutusunu tarar. Eğer aynı isimde bir kategori varsa istek API'ye hiç gönderilmez ve `toastr.warning` ile kullanıcı uyarılır.
+* **Backend Seviyesi:** Veritabanında `categories` tablosunun `name` alanı `UNIQUE` olarak mühürlenmiştir. Olası bir bypass durumunda `MY_Controller` (Api_Controller) isteği kapıda yakalar ve `400 Bad Request` ile anlamlı bir JSON yanıtı döner. Frontend bu yanıtı `try-catch` mekanizmasıyla parse ederek ekrana kusursuz yansıtır.
 
-### 3. Esnek ve Seçici API Güvenliği (JWT)
-* Geliştirilen `auth_check()` güvenlik duvarı sayesinde, sistemdeki kritik operasyonlar token kontrolüne tabi tutulmuştur.
-* Proje ihtiyaçları doğrultusunda **esnek iş mantığı (business logic)** uygulanmıştır: `GET` (Listeleme), `POST` (Ekleme) ve `PUT` (Güncelleme) işlemleri hızlı işlem yapılabilmesi için herkese açık bırakılmış; ancak en kritik operasyon olan `DELETE` (Silme) işlemi **JWT Bearer Token** ile sıkı bir koruma altına alınmıştır.
+### 3. Gizli JWT Panel Modülü ve Güvenli Silme Operasyonu
+Sistemde veri listeleme, kategori ve ürün ekleme süreçleri hızlı operasyon için esnek bırakılmış; ancak en kritik süreç olan **DELETE (Ürün Silme)** işlemi sıkı korumaya alınmıştır:
+* Arayüze entegre edilen `type="password"` biçimindeki gizli **JWT Giriş Formu**, girilen geçerli tokenı tarayıcının yerel hafızasına (`localStorage`) kaydeder. Sayfa yenilense bile kullanıcıyı yormaz.
+* Silme butonuna basıldığında token otomatik olarak AJAX Headers katmanına (`Authorization: Bearer <token>`, `X-Authorization`) enjekte edilir.
+* Backend çekirdeği (`MY_Controller.php`) gelen istekleri cross-platform (büyük/küçük harf veya sunucu değişkeni) tarayarak doğrular. Geçersiz durumlarda `401 Unauthorized` koruma duvarı devreye girer.
+
+### 4. İlişkisel Veritabanı Tasarımı (SQL JOIN & Cascade)
+* `categories` ve `products` tabloları arasında Foreign Key ilişkisi kurulmuştur. `ON DELETE CASCADE` kuralı sayesinde veri tutarlılığı (Referential Integrity) veritabanı seviyesinde korunur.
+* Ürün listelenirken CodeIgniter Query Builder vasıtasıyla `INNER JOIN` yapılarak ilişkili kategorinin adı canlı olarak tabloya basılır.
 
 ---
 
 ## 🔌 API Endpoint'leri ve Rotalar (Routes)
 
 ### Kimlik Doğrulama (Auth)
-* `POST /index.php/auth/login` -> Kullanıcı adı ve şifre doğrulaması yaparak **JWT Token** üretir.
+* `POST /index.php/auth/login` -> Kullanıcı adı (`admin`) ve şifre (`daynex123`) doğrulaması yaparak 1 saat ömürlü JWT Token üretir.
 
 ### Kategoriler (Category)
 * `GET /index.php/category` -> Tüm kategorileri listeler.
-* `POST /index.php/category/create` -> Yeni kategori ekler.
+* `POST /index.php/category/create` -> Yeni kategori ekler. *(İsim benzersiz olmak zorundadır).*
 * `PUT /index.php/category/update/(:num)` -> Belirtilen ID'deki kategoriyi günceller.
 * `DELETE /index.php/category/delete/(:num)` -> Belirtilen ID'deki kategoriyi siler.
 
 ### Ürünler (Product)
-* `GET /index.php/product` -> Tüm ürünleri, bağlı oldukları kategori adıyla (`JOIN`) birlikte listeler.
-* `GET /index.php/product/detail/(:num)` -> Belirli bir ürünün detayını getirir.
-* `POST /index.php/product/create` -> Yeni ürün ekler (Geçerli bir `category_id` zorunludur).
+* `GET /index.php/product` -> Tüm ürünleri, bağlı oldukları kategori adıyla (`INNER JOIN`) birlikte listeler.
+* `POST /index.php/product/create` -> Yeni ürün ekler *(Geçerli bir category_id zorunludur)*.
 * `PUT /index.php/product/update/(:num)` -> Ürün bilgilerini günceller.
-* `DELETE /index.php/product/delete/(:num)` -> **[KORUMALI]** Ürünü siler. İstek atılırken Header'da geçerli bir `Authorization: Bearer <token>` gönderilmesi zorunludur.
+* `DELETE /index.php/product/delete/(:num)` -> **[KORUMALI]** Ürünü siler. İstek atılırken Header katmanında geçerli bir JWT Token gönderilmesi zorunludur.
 
 ---
 
@@ -65,7 +74,9 @@ Tüm controller sınıflarının türediği `Api_Controller`, projenin kalbini o
 Projenin Docker altyapısı sayesinde tek bir komutla tüm sistemi ayağa kaldırabilirsiniz:
 
 ```bash
-# Konteynerleri inşa et ve arka planda çalıştır
+# 1. Konteynerleri inşa et ve arka planda çalıştır
 docker-compose up -d --build
 
-# Veritabanı tablolarının oluşturulması için Docker içerisindeki MySQL'e bağlanıp SQL sorgularını çalıştırabilirsiniz.
+# 2. Docker içerisindeki MySQL terminaline bağlanın (Tablo sıfırlama / Unique kuralı için)
+docker exec -it daynex_api_db mysql -u root -p
+# (Şifre: rootpassword)
