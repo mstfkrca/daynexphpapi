@@ -3,9 +3,6 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 class Category_model extends CI_Model {
 
-    // PHP 8 uyumluluğu için constructor'ı (__construct) tamamen kaldırdık.
-    // CI_Model arkada kendi işlerini hallediyor, bizim doğrudan fonksiyonlara odaklanmamız yeterli.
-
     // 1. Tüm Kategorileri Çeken Fonksiyon
     public function get_all() {
         // SELECT * FROM categories sorgusunu çalıştırır
@@ -15,7 +12,7 @@ class Category_model extends CI_Model {
         return $query->result_array();
     }
 
-    // 2. Yeni Kategori Ekleyen Fonksiyon
+    // 2. Yeni Kategori Ekleyen Fonksiyon (Sadece 1 Kere Tanımlı)
     public function insert($data) {
         // INSERT INTO categories (...) VALUES (...) sorgusunu çalıştırır
         $this->db->insert('categories', $data);
@@ -24,7 +21,7 @@ class Category_model extends CI_Model {
         return $this->db->insert_id();
     }
 
-    // Dışarıdan gelen ID bilgisine göre veri tabanından satır siler
+    // 3. Kategori Silen Fonksiyon
     public function delete($id) {
         // Hangi satırın silineceğini filtreliyoruz: WHERE id = $id
         $this->db->where('id', $id);
@@ -33,13 +30,12 @@ class Category_model extends CI_Model {
         return $this->db->delete('categories');
     }
 
-    // Dışarıdan gelen ID'ye sahip satırı, gelen yeni verilerle ($data) günceller
+    // 4. Kategori Güncelleyen Fonksiyon
     public function update($id, $data) {
         // Hangi satırın güncelleneceğini seçiyoruz: WHERE id = $id
         $this->db->where('id', $id);
         
         // categories tablosundaki o satırı yeni veri paketiyle güncelliyoruz
-        // Arka planda "UPDATE categories SET name = ..., description = ... WHERE id = ..." çalışır
         return $this->db->update('categories', $data);
     }
-} 
+}

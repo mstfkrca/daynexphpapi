@@ -14,16 +14,16 @@ class MY_Controller extends CI_Controller {
 class Api_Controller extends MY_Controller {
 
     protected $input_data;
-    // JWT şifrelemesinde kullanılacak gizli anahtar (Daynex'te bunu config'e taşırlar)
+    // JWT şifrelemesinde kullanılacak gizli anahtar
     private $jwt_secret = 'daynex_b2b_saas_api_gizli_saf_jwt_anahtari_2026_super_secret!';
 
     public function __construct() {
         parent::__construct();
 
-        // CORS Ayarları
+        // CORS Ayarları (X-Authorization ve x-authorization izin listesine eklendi)
         header("Access-Control-Allow-Origin: *");
         header("Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE");
-        header("Access-Control-Allow-Headers: Content-Type, Content-Length, Accept-Encoding, Authorization, X-Requested-With");
+        header("Access-Control-Allow-Headers: Content-Type, Content-Length, Accept-Encoding, Authorization, X-Authorization, x-authorization, X-Requested-With");
         
         if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
             $this->output->set_status_header(200)->_display();
@@ -36,48 +36,59 @@ class Api_Controller extends MY_Controller {
     }
 
     /**
-     * Dışarıya Token Üretme Fonksiyonu (Giriş yapıldığında çağrılacak)
+     * Dışarıya Token Üretme Fonksiyonu
      */
     protected function generate_token($user_data) {
         $issued_at = time();
         $payload = [
-            'iat'  => $issued_at,            // Token'ın üretilme zamanı
-            'exp'  => $issued_at + 3600,     // Token'ın ömrü (1 Saat = 3600 saniye)
-            'user' => $user_data             // İçine koyacağımız kullanıcı bilgileri
+            'iat'  => $issued_at,
+            'exp'  => $issued_at + 3600, // 1 Saat geçerlilik
+            'user' => $user_data
         ];
-
-        // HS256 algoritmasıyla şifreleyip string token dönüyoruz
         return JWT::encode($payload, $this->jwt_secret, 'HS256');
     }
 
     /**
-     * KORUMA DUVARI: Bu fonksiyonu çağıran endpoint'e token'sız girilemez!
+     * KORUMA DUVARI (Geliştirilmiş Kurşun Geçirmez Sürüm)
      */
     protected function auth_check() {
-        // Gelen isteklerin Header (Başlık) kısmından Authorization alanını yakalıyoruz
+        $headers = null;
+
+        // 1. İhtimal: Standart Authorization başlığına bak
         $headers = $this->input->get_request_header('Authorization', TRUE);
+
+        // 2. İhtimal: X-Authorization başlığına bak
+        if (!$headers) {
+            $headers = $this->input->get_request_header('X-Authorization', TRUE);
+        }
+
+        // 3. İhtimal: Küçük harfli x-authorization başlığına bak
+        if (!$headers) {
+            $headers = $this->input->get_request_header('x-authorization', TRUE);
+        }
 
         if (!$headers) {
             $this->response(false, 'Yetkilendirme başlığı bulunamadı. Lütfen giriş yapın.', null, 401);
         }
 
-        // Header genellikle "Bearer <token>" şeklinde gelir. Aradaki boşluktan token'ı ayırıyoruz.
-        $token_parts = explode(" ", $headers);
-        $token = $token_parts[1] ?? null;
+        // Eğer gelen değer direkt ham token ise veya Bearer içeriyorsa parçala
+        if (preg_match('/Bearer\s(\S+)/', $headers, $matches)) {
+            $token = $matches[1];
+        } else {
+            // Eğer Bearer yazılmadan direkt ham token gönderildiyse doğrudan kabul et
+            $token = trim($headers);
+        }
 
-        if (!$token) {
-            $this->response(false, 'Geçersiz Token formatı.', null, 401);
+        if (!$token || $token === 'null') {
+            $this->response(false, 'Geçersiz veya boş Token formatı.', null, 401);
         }
 
         try {
-            // Token'ı gizli anahtarımızla çözmeye çalışıyoruz
+            // Token'ı çözüyoruz
             $decoded = JWT::decode($token, new Key($this->jwt_secret, 'HS256'));
-            
-            // Eğer token sağlamsa, içindeki kullanıcı bilgilerini controller kullansın diye return ediyoruz
             return $decoded->user;
 
         } catch (Exception $e) {
-            // Token'ın süresi bittiyse veya sahteyse burası yakalar
             $this->response(false, 'Geçersiz veya süresi dolmuş Token! Giriş reddedildi.', null, 401);
         }
     }
