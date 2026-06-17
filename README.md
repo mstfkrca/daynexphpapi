@@ -69,14 +69,34 @@ Sistemde veri listeleme, kategori ve ürün ekleme süreçleri hızlı operasyon
 
 ---
 
-## 🚀 Kurulum ve Çalıştırma
+## 🚀 Kurulum, Çalıştırma ve Test Adımları
 
-Projenin Docker altyapısı sayesinde tek bir komutla tüm sistemi ayağa kaldırabilirsiniz:
+Projenin Docker altyapısı sayesinde tek bir komutla tüm sistemi ayağa kaldırabilir ve hemen test etmeye başlayabilirsiniz:
 
+### 1. Sistemi Ayağa Kaldırma
 ```bash
-# 1. Konteynerleri inşa et ve arka planda çalıştır
+# Konteynerleri inşa et ve arka planda çalıştır
 docker-compose up -d --build
+```
 
-# 2. Docker içerisindeki MySQL terminaline bağlanın (Tablo sıfırlama / Unique kuralı için)
+### 2. Veritabanı Yapılandırması
+Docker içerisindeki MySQL terminaline bağlanıp tablolarınızı oluşturun:
+```bash
 docker exec -it daynex_api_db mysql -u root -p
 # (Şifre: rootpassword)
+```
+
+### 3. API Güvenlik Duvarını (JWT) Test Etme Adımları
+Projedeki **Kalıcı Sil** özelliğini test edebilmek için öncelikle geçerli bir JWT Token üretmeniz gerekmektedir:
+
+1. **Postman'i Açın:** Bir `POST` isteği oluşturun ve adrese `http://localhost:8080/index.php/auth/login` yazın.
+2. **Kimlik Bilgilerini Gönderin:** `Body` kısmını `raw` ve `JSON` seçerek şu bilgileri gönderin:
+   ```json
+   {
+     "username": "admin",
+     "password": "daynex123"
+   }
+   ```
+3. **Token'ı Kopyalayın:** İstek başarılı olduğunda API size `Giriş başarılı! Token üretildi.` mesajıyla birlikte uzun bir `token` dizesi dönecektir. Bu token değerini tamamen kopyalayın.
+4. **Panelde Hafızaya Alın:** Tarayıcıda `index.html` sayfasını açın. Sağ üst köşedeki **🔑 JWT:** alanına bu token'ı yapıştırın ve **Kaydet** butonuna basın (veya Enter'layın).
+5. **Silme İşlemini Gerçekleştirin:** Artık tarayıcı hafızasına token kaydedildiği için, tablodan dilediğiniz ürünü güvenlik duvarına takılmadan başarıyla silebilirsiniz.
